@@ -1,0 +1,25 @@
+# Pre-commit configuration for bootstrap-infisical
+# Install with: pre-commit install --hook-type commit-msg
+
+repos:
+  # Conventional Commits validation
+  - repo: https://github.com/matthew-on-git/pre-commit-conventional-commits
+    rev: master
+    hooks:
+      - id: conventional-commit-check
+        stages:
+          - commit-msg
+
+  # Shell script linting and formatting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        args: ["--severity=warning"]
+
+  # Shell script formatting
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.7.0-4
+    hooks:
+      - id: shfmt
+        args: ["-i", "2", "-ci", "-sr"]

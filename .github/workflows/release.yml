@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    # Only run on merge commits (not on direct pushes to main/master)
+    if: github.event_name == 'push' && github.event.head_commit.message =~ /^Merge pull request/
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from commit message
+        id: version
+        run: |
+          # Extract version from merge commit message or use timestamp
+          # You can customize this to extract from conventional commit tags
+          if echo "${{ github.event.head_commit.message }}" | grep -qE '^Merge pull request.*#\d+.*\(v?[0-9]+\.[0-9]+\.[0-9]+\)'; then
+            VERSION=$(echo "${{ github.event.head_commit.message }}" | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          else
+            # Fallback: use date-based version
+            VERSION="v$(date +%Y.%m.%d)-$(echo ${{ github.sha }} | cut -c1-7)"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Release version: $VERSION"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Release ${{ steps.version.outputs.version }}
+          body: |
+            ## Changes in this release
+            
+            See commit history for details.
+            
+            **Commit:** ${{ github.sha }}
+            **Author:** ${{ github.event.head_commit.author.name }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
