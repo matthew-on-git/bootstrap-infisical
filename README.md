@@ -169,3 +169,4 @@ Alternatively, edit `/opt/infisical/.install.conf`, update the `INFISICAL_VERSIO
 - `.env`, `.install.conf`, and `.cloudflare-credentials` are chmod 600 (root-only readable)
 - Certbot auto-renewal is handled by Ubuntu's systemd timer (TLS modes only)
 - No secrets are stored in this repository
+
