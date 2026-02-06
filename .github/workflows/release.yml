@@ -11,6 +11,8 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     # Only run on merge commits (not on direct pushes to main/master)
     if: github.event_name == 'push' && contains(github.event.head_commit.message, 'Merge pull request')
     steps:
