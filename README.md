@@ -8,6 +8,7 @@ Idempotent installer for [Infisical](https://infisical.com) secret manager on Ub
 - **PostgreSQL 14** -- encrypted secret storage
 - **Redis 7** -- caching and job queues
 - **Daily backup cron** -- PostgreSQL dumps with configurable retention
+- **Bounded container logs** -- Docker `local` log driver, capped at 50 MB x 5 files per container
 - **Optional: nginx + Let's Encrypt** -- TLS-terminating reverse proxy (skip if behind your own load balancer)
 
 ## Prerequisites
@@ -107,6 +108,7 @@ After installation:
 | `/opt/infisical/docker-compose.yml` | Docker Compose service definitions |
 | `/opt/infisical/backups/` | Daily PostgreSQL backup dumps (.sql.gz) |
 | `/etc/cron.d/infisical-backup` | Daily backup cron job |
+| `/etc/docker/daemon.json` | Docker log rotation defaults (bounds container log growth) |
 | `/opt/infisical/.cloudflare-credentials` | Cloudflare API token for certbot (`dns-cloudflare` mode only) |
 | `/etc/nginx/sites-available/infisical` | nginx reverse proxy config (TLS modes only) |
 | `/etc/letsencrypt/live/<domain>/` | TLS certificates (TLS modes only) |

@@ -284,6 +284,33 @@ fi
 log "Installing packages: ${PACKAGES[*]}"
 apt-get install -y -qq "${PACKAGES[@]}"
 
+# -----------------------------------------------------------------------------
+# Configure Docker Log Rotation
+# -----------------------------------------------------------------------------
+# Docker's default json-file driver keeps container logs forever. On a
+# long-lived host this silently fills the root filesystem, which takes Redis
+# down (it cannot write its RDB snapshot) and the backend with it. The "local"
+# driver compresses on rotation and is bounded by default, so it fails safe
+# even if these options are ever dropped.
+log "Configuring Docker log rotation..."
+mkdir -p /etc/docker
+cat > /etc/docker/daemon.json << 'DOCKER_DAEMON_EOF'
+{
+  "log-driver": "local",
+  "log-opts": {
+    "max-size": "50m",
+    "max-file": "5"
+  }
+}
+DOCKER_DAEMON_EOF
+
+# Log options apply only to newly created containers, so a running daemon
+# needs a restart before the compose stack is brought up below.
+if systemctl is-active --quiet docker; then
+  log "Restarting Docker to apply log rotation settings..."
+  systemctl restart docker
+fi
+
 # Enable and start services
 systemctl enable --now docker
 if [[ "$TLS_MODE" != "off" ]]; then
@@ -413,9 +440,16 @@ else
 fi
 
 cat > "${INSTALL_DIR}/docker-compose.yml" << EOF
+x-logging: &default-logging
+  driver: local
+  options:
+    max-size: "50m"
+    max-file: "5"
+
 services:
   backend:
     container_name: infisical-backend
+    logging: *default-logging
     restart: unless-stopped
     depends_on:
       db:
@@ -435,6 +469,7 @@ services:
   redis:
     image: redis:${REDIS_VERSION}
     container_name: infisical-redis
+    logging: *default-logging
     restart: always
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
@@ -445,6 +480,7 @@ services:
 
   db:
     container_name: infisical-db
+    logging: *default-logging
     image: postgres:${POSTGRES_VERSION}
     restart: always
     env_file: .env
